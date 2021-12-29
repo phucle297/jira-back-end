@@ -1,7 +1,17 @@
 const { Users } = require("../models");
 const { generateToken, verifyToken } = require("../utils/jwt");
-const { ReS, ReE } = require("../utils/response");
 const bcrypt = require("bcrypt");
+const aws = require("aws-sdk");
+const {
+  S3_ACCESS_KEY_ID,
+  S3_SECRET_KEY,
+  S3_BUCKET_NAME,
+  S3_DOMAIN_NAME,
+} = require("../config");
+const s3 = new aws.S3({
+  accessKeyId: S3_ACCESS_KEY_ID,
+  secretAccessKey: S3_SECRET_KEY,
+});
 const getAll = async (req, res) => {
   try {
     const users = await Users.findAll({
@@ -116,4 +126,38 @@ const remove = async (req, res) => {
     return res.status(400).json(400, error);
   }
 };
-module.exports = { getAll, getById, signup, login, edit, remove };
+const uploadAvatar = (req, res) => {
+  const { folder } = req.body;
+  const { buffer, originalname, mimetype } = req.file;
+
+  const dst = `${folder}/${Date.now()}_${originalname}`;
+
+  const params = {
+    Bucket: S3_BUCKET_NAME,
+    Key: dst,
+    Body: buffer,
+    ContentType: mimetype,
+  };
+
+  s3.putObject(params, async (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      const url = `${S3_DOMAIN_NAME}/${dst}`;
+      const token = req.header("Authorization").split(" ")[1];
+      let userLoginToken;
+      await verifyToken(token).then((data) => (userLoginToken = data));
+      const lgemail = userLoginToken.email;
+      const userLogin = await Users.findOne({
+        where: { email: lgemail },
+        attributes: { exclude: ["password"] },
+      });
+      userLogin.avatar = url;
+      await userLogin.save();
+      return res
+        .status(200)
+        .json(200, { message: "Change Avatar Success!", userLogin });
+    }
+  });
+};
+module.exports = { getAll, getById, signup, login, edit, remove, uploadAvatar };
