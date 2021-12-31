@@ -1,5 +1,4 @@
 const { ProjectCategory } = require("../models");
-const { ReS } = require("../utils/response");
 
 const getAll = async (req, res) => {
   try {

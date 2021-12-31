@@ -7,6 +7,7 @@ module.exports = (sequelize) => {
       });
       Projects.belongsTo(models.ProjectCategory, {
         foreignKey: "categoryId",
+        as: "projectCategory",
       });
       Projects.belongsToMany(models.Users, {
         through: "userProject",

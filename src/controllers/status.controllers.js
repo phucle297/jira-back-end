@@ -1,10 +1,9 @@
 const { Status } = require("../models");
-const { ReS } = require("../utils/response");
 
 const getAll = async (req, res) => {
   try {
-    const status = await Status.findAll();
-    ReS(res, status, 200);
+    const statuses = await Status.findAll();
+    return res.status(200).json(200, statuses);
   } catch (error) {
     throw error;
   }

@@ -1,9 +1,8 @@
 const { TaskTypes } = require("../models");
-const { ReS } = require("../utils/response");
 const getAll = async (req, res) => {
   try {
     const tt = await TaskTypes.findAll();
-    ReS(res, tt, 200);
+    res.status(200).json(200, tt);
   } catch (error) {
     throw error;
   }
