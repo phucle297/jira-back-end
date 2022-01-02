@@ -1,4 +1,4 @@
-const { Projects, ProjectCategory } = require("../models");
+const { Projects, ProjectCategory, UserProject } = require("../models");
 const { verifyToken } = require("../utils/jwt");
 
 const getAllAdmin = async (req, res) => {
@@ -38,7 +38,16 @@ const create = async (req, res) => {
     await verifyToken(token).then((data) => (userLogin = data));
     const project = { ...req.body, creator: userLogin.email };
     const projectCreated = await Projects.create(project);
-    res.status(201).json(201, projectCreated);
+    await UserProject.create(
+      {
+        userId: userLogin.id,
+        projectId: projectCreated.id,
+      },
+      {
+        fields: ["userId", "projectId"],
+      }
+    );
+    return res.status(201).json(201, projectCreated);
   } catch (error) {
     throw error;
   }
@@ -112,4 +121,34 @@ const remove = async (req, res) => {
     throw error;
   }
 };
-module.exports = { getAllAdmin, create, getAll, getById, remove, update };
+const assignUserProject = async (req, res) => {
+  try {
+    const token = req.header("Authorization").split(" ")[1];
+    const id = req.body.projectId;
+    let userLogin;
+    await verifyToken(token).then((data) => (userLogin = data));
+    const project = await Projects.findOne({
+      where: { creator: userLogin.email, id },
+    });
+    if (!project)
+      return res
+        .status(404)
+        .json(
+          404,
+          "Project not found or you are not the creator of this project"
+        );
+    await project.addUser(req.body.userId);
+    return res.status(200).json(200, "User assigned to project");
+  } catch (error) {
+    throw error;
+  }
+};
+module.exports = {
+  getAllAdmin,
+  create,
+  getAll,
+  getById,
+  remove,
+  update,
+  assignUserProject,
+};

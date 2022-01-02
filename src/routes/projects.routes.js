@@ -1,11 +1,16 @@
 const express = require("express");
 const projectRoutes = express.Router();
 const ProjectControllers = require("../controllers/projects.controllers");
+const { authenticate } = require("../middlewares/authentication");
+projectRoutes.get("/admin", authenticate, ProjectControllers.getAllAdmin);
+projectRoutes.get("/:id", authenticate, ProjectControllers.getById);
+projectRoutes.get("/", authenticate, ProjectControllers.getAll);
+projectRoutes.post("/", authenticate, ProjectControllers.create);
+projectRoutes.put("/", authenticate, ProjectControllers.update);
+projectRoutes.delete("/:id", authenticate, ProjectControllers.remove);
 
-projectRoutes.get("/admin", ProjectControllers.getAllAdmin);
-projectRoutes.get("/:id", ProjectControllers.getById);
-projectRoutes.get("/", ProjectControllers.getAll);
-projectRoutes.post("/", ProjectControllers.create);
-projectRoutes.put("/", ProjectControllers.update);
-projectRoutes.delete("/:id", ProjectControllers.remove);
+projectRoutes.post(
+  "/assign-user-project",
+  ProjectControllers.assignUserProject
+);
 module.exports = projectRoutes;
